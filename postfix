@@ -1,0 +1,26 @@
+#! /bin/sh
+
+echo "Please enter your password so that we can ensure permissions are set correctly for homebrew and postgres"
+
+# Validate sudo
+sudo -v
+# Take ownership of homebrew
+sudo chown -R $USER /usr/local/
+
+
+# Determine if postgres is installed
+if ! brew list | grep --silent postgresql; then
+  brew install postgresql
+fi
+
+ # symlink plist for load at startup
+ ln -sfv /usr/local/opt/postgresql/*.plist ~/Library/LaunchAgents
+ # unload plist in case it has errored
+ launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.postgresql.plist
+ # reload plist so postgres will start
+ launchctl load ~/Library/LaunchAgents/homebrew.mxcl.postgresql.plist
+
+# remove possibly corrupt postgres directory
+rm -rf /usr/local/var/postgres/
+# create the database
+initdb /usr/local/var/postgres -E utf8
